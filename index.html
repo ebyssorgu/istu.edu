@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belge Doğrulama Sistemi | Document Verification System - ISTU</title>
+    <style>
+        body { background-color: #f0f2f5; color: #333; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        
+        /* Sorgulama Kutusu Tasarımı / Query Box Design */
+        .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; border-top: 6px solid #003366; }
+        .login-box img { width: 110px; margin-bottom: 15px; }
+        .login-box h2 { font-size: 1.2rem; color: #003366; margin-bottom: 5px; }
+        .login-box p.sub-title { font-size: 0.85rem; color: #666; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; color: #333; margin-bottom: 5px; font-weight: bold; }
+        .input-group label span { display: block; font-size: 0.75rem; color: #888; font-weight: normal; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; outline: none; transition: 0.3s; font-size: 0.9rem; }
+        .input-group input:focus { border-color: #003366; box-shadow: 0 0 5px rgba(0,51,102,0.2); }
+        
+        .btn-query { width: 100%; padding: 14px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; text-transform: uppercase; }
+        .btn-query:hover { background: #002244; }
+
+        /* Sonuç Kartı Tasarımı / Result Card Design */
+        #resultCard { display: none; background: white; width: 100%; max-width: 750px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 10px solid #003366; padding: 40px; position: relative; animation: fadeIn 0.6s ease; }
+        .header { text-align: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 25px; padding-bottom: 15px; }
+        .university-logo { width: 120px; height: auto; margin-bottom: 10px; }
+        .university-name { font-size: 1.6rem; font-weight: bold; color: #003366; margin: 0; text-transform: uppercase; }
+        .office-name { font-size: 0.85rem; color: #666; margin-top: 5px; font-weight: 600; line-height: 1.4; }
+        
+        .main-content { display: flex; gap: 30px; margin-top: 20px; align-items: flex-start; }
+        .student-photo-container { flex: 0 0 160px; text-align: center; }
+        .student-photo { width: 160px; height: 200px; border: 2px solid #003366; border-radius: 8px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .info-table { flex: 1; border-collapse: collapse; }
+        .info-table td { padding: 12px; border-bottom: 1px solid #f7f7f7; font-size: 0.9rem; }
+        .label { font-weight: bold; color: #555; width: 45%; background-color: #fafafa; }
+        .label span { display: block; font-size: 0.75rem; color: #888; font-weight: normal; }
+        
+        .score-container { background: #f8fbff; padding: 25px; border-radius: 10px; margin-top: 25px; text-align: center; border: 1px solid #e1e8f0; }
+        .score-title { font-size: 0.9rem; color: #5a6b7d; font-weight: bold; margin-bottom: 10px; }
+        .score-value { font-size: 2.4rem; color: #27ae60; font-weight: bold; }
+        
+        .verified-status { display: inline-block; background: #27ae60; color: white; padding: 10px 25px; border-radius: 30px; font-size: 0.95rem; font-weight: bold; margin-bottom: 20px; }
+        
+        .footer { margin-top: 30px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px; line-height: 1.6; }
+        .signature-text { color: #003366; font-weight: bold; display: block; font-size: 1rem; margin-bottom: 5px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 600px) { .main-content { flex-direction: column; align-items: center; } .info-table { width: 100%; } }
+    </style>
+</head>
+<body>
+
+    <div class="login-box" id="loginBox">
+        <img src="https://i.imgur.com/yrwnpr9.png" alt="ISTU">
+        <h2>Belge Sorgulama Sistemi</h2>
+        <p class="sub-title">Document Verification System</p>
+        
+        <div class="input-group">
+            <label>Doğrulama Kodu:<span>Verification Code</span></label>
+            <input type="text" id="inputCode" placeholder="690K-TRAO-D7R5">
+        </div>
+
+        <div class="input-group">
+            <label>Belge Sayısı:<span>Document Number</span></label>
+            <input type="text" id="inputDocNum" placeholder="E-4651465861...">
+        </div>
+
+        <button class="btn-query" onclick="checkData()">Sorgula / Query</button>
+        <p id="errorMsg" style="color: #c0392b; font-size: 0.8rem; margin-top: 15px; display: none; font-weight: bold;">
+            Hatalı bilgi! Lütfen tekrar deneyin.<br>
+            Invalid information! Please try again.
+        </p>
+    </div>
+
+    <div id="resultCard">
+        <div class="header">
+            <img src="https://i.imgur.com/yrwnpr9.png" alt="ISTU Logo" class="university-logo">
+            <p class="university-name">ISTU</p>
+            <p class="office-name">
+                INTERNATIONAL SCIENCE AND TECHNOLOGY UNIVERSITY<br>
+                Sınav ve Belgelendirme Ofisi / Examination and Certification Office
+            </p>
+            <div class="verified-status">BELGE DOĞRULANDI / DOCUMENT VERIFIED ✅</div>
+        </div>
+
+        <div class="main-content">
+            <div class="student-photo-container">
+                <img src="https://i.imgur.com/u060co7.jpeg" alt="Öğrenci" class="student-photo">
+            </div>
+            <table class="info-table">
+                <tr><td class="label">Adı Soyadı:<span>Name and Surname</span></td><td>IBRAHIM KAHAZAAL YOUSIF YOUSIF</td></tr>
+                <tr><td class="label">Kimlik - Pasaport No:<span>ID - Passport No</span></td><td>99875501262-A17526095</td></tr>
+                <tr><td class="label">Doğum Tarihi:<span>Date of Birth</span></td><td>03.07.1997</td></tr>
+                <tr><td class="label">Uyruk:<span>Nationality</span></td><td>IRAK / IRAQ</td></tr>
+                <tr><td class="label">Sınav Tarihi:<span>Date of Exam</span></td><td>08.06.2024</td></tr>
+                <tr><td class="label">Belge Sayısı:<span>Document Number</span></td><td>E-4651465861-301.02.04-1553</td></tr>
+                <tr><td class="label">Doğrulama Kodu:<span>Verification Code</span></td><td>690K-TRAO-D7R5</td></tr>
+            </table>
+        </div>
+
+        <div class="score-container">
+            <div class="score-title">SINAV SONUÇ PUANI / EXAM RESULT SCORE</div>
+            <div class="score-value">81,25 / 100</div>
+            <div style="font-size: 0.95rem; color: #555; margin-top: 5px;">
+                Doğru (Correct): 65 | Yanlış (Incorrect): 15 | Boş (Empty): 0
+            </div>
+        </div>
+
+        <div class="footer">
+            <span class="signature-text">Prof. Dr. Erdal DURSUN</span>
+            Rektör / Rector<br><br>
+            Bu belge güvenli elektronik imza ile imzalanmıştır.<br>
+            This document is signed with a secure electronic signature.<br><br>
+            Sınav sonuçları 100 puan üzerinden değerlendirilir ve 1 yıl süreyle geçerlidir.<br>
+            Exam scores are evaluated over 100 points and they are valid for 1 year.
+        </div>
+    </div>
+
+    <script>
+        function checkData() {
+            const code = document.getElementById('inputCode').value.trim();
+            const docNum = document.getElementById('inputDocNum').value.trim();
+            const error = document.getElementById('errorMsg');
+
+            // Doğru Bilgiler / Correct Information
+            const correctCode = "690K-TRAO-D7R5";
+            const correctDocNum = "E-4651465861-301.02.04-1553";
+
+            if (code === correctCode && docNum === correctDocNum) {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('resultCard').style.display = 'block';
+            } else {
+                error.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
